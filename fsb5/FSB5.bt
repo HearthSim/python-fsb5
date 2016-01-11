@@ -1,0 +1,163 @@
+//--------------------------------------
+//--- 010 Editor Binary Template
+//
+// File:     FSB5.bt
+// Author:   Simon Pinfold
+// Purpose:  Parses the FSB5 (v0 and v1) audio container.
+//--------------------------------------
+
+BitfieldDisablePadding();
+
+string FlagComment(int flag){
+    string flagString = "Flags = ";
+    if (flag & 0x01) flagString += "Has extra parameters. ";
+    if (flag & 0x10) flagString += "MPEG frames aligned to 4 bytes. ";
+    if (flag & 0x20) flagString += "Has 2 channels. ";
+    return flagString;
+}
+
+string OffsetCalcComment(int offset){
+    string s;
+    SPrintf(s, "Offset = %d from sampleData start", offset * 16);
+    return s;
+}
+
+typedef enum<uint32> {
+    NONE = 0,
+    PCM8 = 1,
+    PCM16 = 2,
+    PCM24 = 3,
+    PCM32 = 4,
+    PCMFLOAT = 5,
+    GCADPCM = 6,
+    IMAADPCM = 7,
+    VAG = 8,
+    HEVAG = 9,
+    XMA = 10,
+    MPEG = 11,
+    CELT = 12,
+    AT9 = 13,
+    XWMA = 14,
+    VORBIS = 15
+} MODE;
+
+typedef enum<uint32> {
+    CHANNELS=1,
+    FREQUENCY=2,
+    LOOP=3,
+    XMASEEK=6,
+    DSPCOEFF=7,
+    XWMADATA=10
+} CHUNK_TYPE;
+
+typedef struct {
+    char     id[4];
+    if (id != "FSB5"){
+        Warning( "File is not FSB5. Template stopped." );
+        return -1;
+    }
+    int32     version;
+    int32     numSamples;
+    int32     sampleHeaderSize;
+    int32     nameTableSize;
+    int32     dataSize;
+    MODE      mode;
+
+    byte      zero[8];
+    byte      hash[16];
+    byte      dummy[8];
+    if (version == 0) {
+        uint32 unknown <format=hex, bgcolor=0x0000ff>;
+    }
+} FSOUND_FSB_HEADER_FSB5;
+
+typedef struct {
+
+    uint32 flags :6 <format=hex, comment=FlagComment>;
+    uint32 dataOffset :28 <comment=OffsetCalcComment>;
+    uint32 samples : 30;
+
+    if (flags & 0x01){ // has extra params
+
+        local int _next = 1;
+        while (_next){
+            struct {
+                uint32 next :1;
+
+                uint32 size :24;
+                CHUNK_TYPE type :7;
+
+                if (type == CHANNELS){
+                    Assert(size == 1, "Channels chunk should be 1 byte");
+                    byte channels;
+                } else if (type == FREQUENCY){
+                    Assert(size == 4, "Frequency chunk should be 4 bytes");
+                    uint32 frequency;
+                } else if (type == LOOP){
+                    Assert(size == 8, "Frequency chunk should be 8 bytes");
+                    struct {
+                        uint32 loopstart;
+                        uint32 loopend;
+                    } loop;
+                } else if (type == XMASEEK){
+                    byte xmaSeek[size];
+                } else if (type == DSPCOEFF){
+                    byte dspCoefficient[size];
+                } else if (type == XWMADATA){
+                    byte xwmaData[size];
+                } else {
+                    byte unknownData[size];
+                }
+
+            } chunk;
+            _next = chunk.next;
+        }
+    }
+} FSOUND_FSB_SAMPLE_HEADER;
+
+
+
+
+FSOUND_FSB_HEADER_FSB5 header <bgcolor=0xffbf00>;
+
+struct {
+    local int i;
+    for (i = 0; i < header.numSamples; i++) {
+        FSOUND_FSB_SAMPLE_HEADER sampleHeader;
+    }
+} sampleHeaders <bgcolor=0x00ffff>;
+
+if (header.nameTableSize) {
+    local int nameTableStart = FTell();
+    struct {
+        local int i;
+        for (i = 0; i < header.numSamples; i++) {
+            uint32 nameStart;
+        }
+        for (i = 0; i < header.numSamples; i++) {
+            struct {
+                Assert(nameTableStart + nameTable.nameStart[i] == FTell(), "nameStart did not point to expected start of string");
+                string name;
+            } name;
+        }
+    } nameTable <bgcolor=0x33ff00>;
+} else {
+    Printf("No name table\n");
+}
+
+byte pad[(sizeof(header) + header.sampleHeaderSize + header.nameTableSize) - FTell()];
+
+struct {
+    local int dataStart = FTell();
+    local int dataEnd   = dataStart + header.dataSize;
+    local int i, start, end;
+    for (i = 0; i < header.numSamples; i++) {
+        end = dataEnd;
+        if (i+1 < header.numSamples) end = dataStart + sampleHeaders.sampleHeader[i+1].dataOffset * 16;
+        start                            = dataStart + sampleHeaders.sampleHeader[i  ].dataOffset * 16;
+        Assert(start == FTell(), "Wrong length calulated for sample data");
+        struct {
+            byte bytes[end - start] <bgcolor=cLtGray>;
+        } sample;
+    }
+} sampleData;
