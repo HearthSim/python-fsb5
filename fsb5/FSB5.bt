@@ -8,18 +8,25 @@
 
 BitfieldDisablePadding();
 
-string FlagComment(int flag){
-    string flagString = "Flags = ";
-    if (flag & 0x01) flagString += "Has extra parameters. ";
-    if (flag & 0x10) flagString += "MPEG frames aligned to 4 bytes. ";
-    if (flag & 0x20) flagString += "Has 2 channels. ";
-    return flagString;
-}
-
 string OffsetCalcComment(int offset){
     string s;
     SPrintf(s, "Offset = %d from sampleData start", offset * 16);
     return s;
+}
+
+string FrequencyLookupComment(int value){
+    switch (value){
+        case 1: return  "8000Hz";
+        case 2: return "11000Hz";
+        case 3: return "11025Hz";
+        case 4: return "16000Hz";
+        case 5: return "22050Hz";
+        case 6: return "24000Hz";
+        case 7: return "32000Hz";
+        case 8: return "44100Hz";
+        case 9: return "48000Hz";
+        default: { Warning("Invalid value for frequency"); return "Unknown"; }
+    }
 }
 
 typedef enum<uint32> {
@@ -73,11 +80,13 @@ typedef struct {
 
 typedef struct {
 
-    uint32 flags :6 <format=hex, comment=FlagComment>;
-    uint32 dataOffset :28 <comment=OffsetCalcComment>;
-    uint32 samples : 30;
+    uint32 extraParams :1;
+    uint32 frequency   :4 <comment=FrequencyLookupComment>;
+    uint32 twoChannels :1;
+    uint32 dataOffset  :28 <comment=OffsetCalcComment>;
+    uint32 samples     :30;
 
-    if (flags & 0x01){ // has extra params
+    if (extraParams){ // has extra params
 
         local int _next = 1;
         while (_next){

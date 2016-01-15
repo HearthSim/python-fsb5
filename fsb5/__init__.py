@@ -47,7 +47,8 @@ FSB5Header = namedtuple('FSB5Header',
 
 Sample = namedtuple('Sample',
 	[	'name',
-		'flags',
+		'frequency',
+		'channels',
 		'dataOffset',
 		'samples',
 
@@ -55,6 +56,18 @@ Sample = namedtuple('Sample',
 
 		'data'
 	])
+
+frequency_values = {
+	1: 8000,
+	2: 11000,
+	3: 11025,
+	4: 16000,
+	5: 22050,
+	6: 24000,
+	7: 32000,
+	8: 44100,
+	9: 48000
+}
 
 class MetadataChunkType(IntEnum):
 	CHANNELS=1
@@ -95,13 +108,15 @@ class FSB5():
 		self.samples = []
 		for i in range(self.header.numSamples):
 			raw = buf.read_type('Q')
-			flags 		= bits(raw, 0,    6)
-			dataOffset 	= bits(raw, 6,    28) * 16
-			samples     = bits(raw, 6+28, 30)
+			next_chunk  = bits(raw, 0,        1)
+			frequency   = bits(raw, 1,        4)
+			channels    = bits(raw, 1+4,      1)  + 1
+			dataOffset 	= bits(raw, 1+4+1,    28) * 16
+			samples     = bits(raw, 1+4+1+28, 30)
+
+			frequency = frequency_values[frequency]
 
 			chunks = {}
-			chunks = []
-			next_chunk = flags & 1
 			while next_chunk:
 				raw = buf.read_type('I')
 				next_chunk = bits(raw, 0,    1)
