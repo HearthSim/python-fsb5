@@ -54,7 +54,8 @@ typedef enum<uint32> {
     LOOP=3,
     XMASEEK=6,
     DSPCOEFF=7,
-    XWMADATA=10
+    XWMADATA=10,
+    VORBISDATA=11
 } CHUNK_TYPE;
 
 typedef struct {
@@ -114,6 +115,21 @@ typedef struct {
                     byte dspCoefficient[size];
                 } else if (type == XWMADATA){
                     byte xwmaData[size];
+                } else if (type == VORBISDATA){
+                    struct {
+                        uint32 crc32;
+
+                        local int _remain = size - 4;
+                        while (_remain > 0){
+                            struct {
+                                uint32 offset;
+                                if ( _remain > 4) uint32 granulePosition;
+                            } packetData;
+                             _remain -= 8;
+                        }
+
+                        //byte unknownData[size-4] <format=hex>;
+                    } vorbis;
                 } else {
                     byte unknownData[size];
                 }
@@ -164,9 +180,22 @@ struct {
         end = dataEnd;
         if (i+1 < header.numSamples) end = dataStart + sampleHeaders.sampleHeader[i+1].dataOffset * 16;
         start                            = dataStart + sampleHeaders.sampleHeader[i  ].dataOffset * 16;
-        Assert(start == FTell(), "Wrong length calulated for sample data");
+        Assert(start == FTell(), "Wrong length calculated for sample data");
         struct {
-            byte bytes[end - start] <bgcolor=cLtGray>;
+           if (header.mode == VORBIS){
+                while (!FEof()){
+                    struct {
+                        ushort size;
+
+                        if (!size)
+                            return 0;
+                        ubyte  audio :1;
+                        ubyte  r :7;
+                        ubyte  data[size-1];
+                    } packet;
+                }
+            } else
+                byte bytes[end - start] <bgcolor=cLtGray>;
         } sample;
     }
 } sampleData;

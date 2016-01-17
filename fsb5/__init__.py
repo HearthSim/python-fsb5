@@ -25,6 +25,7 @@ class SoundFormat(IntEnum):
 
 file_extensions = {
 	SoundFormat.MPEG     : 'mp3',
+	SoundFormat.VORBIS   : 'ogg'
 }
 
 FSB5Header = namedtuple('FSB5Header',
@@ -76,6 +77,7 @@ class MetadataChunkType(IntEnum):
 	XMASEEK=6
 	DSPCOEFF=7
 	XWMADATA=10
+	VORBISDATA=11
 
 chunk_data_format = {
 	MetadataChunkType.CHANNELS : 'B',
@@ -83,6 +85,7 @@ chunk_data_format = {
 	MetadataChunkType.LOOP: 'II'
 }
 
+VorbisData = namedtuple('VorbisData', ['crc32', 'unknown'])
 
 
 def bits(val, start, len):
@@ -127,7 +130,12 @@ class FSB5():
 					chunk_type = MetadataChunkType(chunk_type)
 				except ValueError:
 					pass
-				if chunk_type in chunk_data_format:
+				if chunk_type == MetadataChunkType.VORBISDATA:
+					chunk_data = VorbisData(
+						crc32   = buf.read_type('I'),
+						unknown = buf.read(chunk_size-4)
+					)
+				elif chunk_type in chunk_data_format:
 					fmt = chunk_data_format[chunk_type]
 					assert buf.struct_calcsize(fmt) == chunk_size, 'Expected chunk %s to be of size %d, but SampleHeader specified %d' % \
 																	(chunk_type, buf.struct_calcsize(fmt), chunk_size)
@@ -175,6 +183,10 @@ class FSB5():
 			raise ValueError('Sample to decode did not originate from the FSB archive decoding it')
 		if self.header.mode == SoundFormat.MPEG:
 			return sample.data
+		elif self.header.mode == SoundFormat.VORBIS:
+			# import here as vorbis.py requires native libraries
+			from . import vorbis
+			return vorbis.rebuild(sample)
 		else:
 			raise NotImplementedError('Decoding samples of type %s is not supported' % self.header.mode)
 
