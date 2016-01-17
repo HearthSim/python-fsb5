@@ -1,4 +1,5 @@
 import ctypes
+import os
 import ctypes.util
 from io import BytesIO
 from enum import IntEnum
@@ -10,14 +11,21 @@ from .vorbis_headers import lookup as vorbis_header_lookup
 class LibraryNotFoundException(OSError):
     pass
 
-def load_lib(name):
-	libname = ctypes.util.find_library(name)
-	if not libname:
-		raise LibraryNotFoundException('Could not load the library %r' % (name))
-	return ctypes.CDLL(libname)
+def load_lib(*names):
+	for name in names:
+		try:
+			libname = ctypes.util.find_library(name)
+			if libname:
+				return ctypes.CDLL(libname)
+			else:
+				dll_path = os.path.join(os.getcwd(), 'lib%s.dll' % name)
+				return ctypes.CDLL(dll_path)
+		except OSError:
+			pass
+	raise LibraryNotFoundException('Could not load the library %r' % (names[0]))
 
 vorbis    = load_lib('vorbis')
-vorbisenc = load_lib('vorbisenc')
+vorbisenc = load_lib('vorbisenc', 'vorbis')
 ogg       = load_lib('ogg')
 
 class VorbisInfo(ctypes.Structure):
@@ -240,8 +248,9 @@ ogg.ogg_stream_pageout.restype = ctypes.c_int
 ogg.ogg_stream_flush.argtypes = [ctypes.POINTER(OggStreamState), ctypes.POINTER(OggPage)]
 ogg.ogg_stream_flush.restype = ctypes.c_int
 
-ogg.oggpack_writecheck.argtypes = [ctypes.POINTER(OggpackBuffer)]
-ogg.oggpack_writecheck.errcheck = errcheck
+if hasattr(ogg, 'oggpack_writecheck'):
+	ogg.oggpack_writecheck.argtypes = [ctypes.POINTER(OggpackBuffer)]
+	ogg.oggpack_writecheck.errcheck = errcheck
 
 
 def rebuild(sample):
@@ -331,7 +340,8 @@ def rebuild_id_header(channels, frequency, blocksize_short, blocksize_long):
 	ogg.oggpack_write(buf, len(bin(blocksize_long))-3, 4)
 	ogg.oggpack_write(buf, 1, 1)
 
-	ogg.oggpack_writecheck(buf)
+	if hasattr(ogg, 'oggpack_writecheck'):
+		ogg.oggpack_writecheck(buf)
 
 	packet.bytes = ogg.oggpack_bytes(buf)
 	buf = ctypes.create_string_buffer(bytes(buf.buffer[:packet.bytes]), packet.bytes)
