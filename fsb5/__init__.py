@@ -108,6 +108,8 @@ class FSB5():
 			self.header = self.header._replace(unknown=buf.read_type('I'))
 		self.header = self.header._replace(mode=SoundFormat(self.header.mode), size=buf.tell())
 
+		self.raw_size = self.header.size + self.header.sampleHeadersSize + self.header.nameTableSize + self.header.dataSize
+
 		self.samples = []
 		for i in range(self.header.numSamples):
 			raw = buf.read_type('Q')

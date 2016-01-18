@@ -21,8 +21,18 @@ optional arguments:
   -p, --prefix-samples  prefix extracted samples with the filename of the FSB
                         container they where extracted from
   -q, --quiet           suppress output of header and sample information
+                        (samples that failed to decode will still be printed)
+  -r, --resource        read multiple FSB5 files packed into the same file
+                        (e.g. Unity3D's .resource files)
  ```
 
 ## Requirements
 
 `libogg` and `libvorbis` are required to decode ogg samples. For linux simply install from your package manager. For windows either ensure the dlls are installed or download the appropriate release.
+
+## Resource files
+
+Unity3D packs multiple FSB5 files each containing a single sample into it's `.resource` files.
+To extract all samples across all FSB5 files packed into the `.resource` file use `--resource`.
+
+Output files will be prefixed with the index of their FSB container within the resource file.
