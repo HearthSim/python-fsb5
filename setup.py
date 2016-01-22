@@ -5,10 +5,10 @@ import fsb5
 
 
 setup(
-	name='python-fsb5',
-	version='1.0',
-	author='Simon Pinfold',
-	author_email='simon@uint8.me',
+	name='fsb5',
+	version=fsb5.__version__,
+	author=fsb5.__author__,
+	author_email=fsb5.__email__,
 	description='Library and to extract audio from FSB5 (FMOD Sample Bank) files',
 	download_url='https://github.com/synap5e/python-fsb5/tarball/master',
 	license='MIT',
