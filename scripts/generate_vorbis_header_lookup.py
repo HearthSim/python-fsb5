@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-from fsb5.vorbis import get_header_info
 import itertools
-from pprint import pprint
 import zlib
+from pprint import pprint
+from fsb5.vorbis import get_header_info
 
 
 if __name__ == '__main__':

@@ -1,12 +1,13 @@
 import ctypes
-import os
 import ctypes.util
-from io import BytesIO
+import os
 from enum import IntEnum
+from io import BytesIO
 
 from . import *
 from .utils import BinaryReader
 from .vorbis_headers import lookup as vorbis_header_lookup
+
 
 class LibraryNotFoundException(OSError):
     pass
