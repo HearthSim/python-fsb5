@@ -28,10 +28,14 @@ class SoundFormat(IntEnum):
 	XWMA = 14
 	VORBIS = 15
 
-file_extensions = {
-	SoundFormat.MPEG     : 'mp3',
-	SoundFormat.VORBIS   : 'ogg'
-}
+	@property
+	def file_extension(self):
+		if self == SoundFormat.MPEG:
+			return 'mp3'
+		elif self == SoundFormat.VORBIS:
+			return 'ogg'
+		return 'bin'
+
 
 FSB5Header = namedtuple('FSB5Header', [
 	'id',
@@ -201,7 +205,7 @@ class FSB5():
 			raise NotImplementedError('Decoding samples of type %s is not supported' % self.header.mode)
 
 	def get_sample_extension(self):
-		return file_extensions.get(self.header.mode, 'bin')
+		return self.header.mode.file_extension
 
 
 def load(data):
