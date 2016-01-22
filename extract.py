@@ -14,8 +14,7 @@ class FSBExtractor:
 
 	def init_parser(self):
 		parser = argparse.ArgumentParser(description=self.description)
-		parser.add_argument('fsb_file',
-			nargs='*', type=argparse.FileType('rb'), default=[sys.stdin.buffer.raw],
+		parser.add_argument('fsb_file', nargs='*', type=str,
 			help='FSB5 container to extract audio from (defaults to stdin)'
 		)
 		parser.add_argument('-o', '--output-directory', default='out/',
@@ -119,12 +118,10 @@ class FSBExtractor:
 	def run(self, args):
 		self.args = self.parser.parse_args(args)
 
-		if self.args.fsb_file[0].fileno() == 0 and self.args.prefix_samples:
-			parser.error('Cannot prefix samples with filename when input is stdin')
-
 		failed, written = [], []
-		for f in self.args.fsb_file:
-			nfailed, nwritten = self.handle_file(f)
+		for fname in self.args.fsb_file:
+			with open(fname, 'rb') as f:
+				nfailed, nwritten = self.handle_file(f)
 			failed += nfailed
 			written += nwritten
 
