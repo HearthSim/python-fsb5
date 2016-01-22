@@ -103,7 +103,7 @@ def bits(val, start, len):
 	return r >> start
 
 
-class FSB5():
+class FSB5:
 	def __init__(self, data):
 		buf = BinaryReader(BytesIO(data), endian='<')
 
