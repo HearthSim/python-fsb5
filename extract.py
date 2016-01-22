@@ -46,7 +46,7 @@ class FSBExtractor:
 			os.makedirs(directory)
 
 		if filename_prefix:
-			path = os.path.join(directory, '{0}.{1}.{2}'.format(filename_prefix, filename, extension))
+			path = os.path.join(directory, '{0}-{1}.{2}'.format(filename_prefix, filename, extension))
 		else:
 			path = os.path.join(directory, '{0}.{1}'.format(filename, extension))
 
