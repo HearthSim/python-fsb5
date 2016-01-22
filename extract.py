@@ -3,7 +3,6 @@
 import argparse
 import sys
 import os
-from pprint import pprint
 import fsb5
 
 parser = argparse.ArgumentParser(description='Extract audio samples from FSB5 files')
