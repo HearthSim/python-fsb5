@@ -119,3 +119,9 @@ If a metadata chunk is unrecognized it will be included in the dictionary as an 
 Samples also have the `data` property.
 This contains the raw, unprocessed audio data for that sample from the FSB file.
 To reconstruct a playable version of the audio use `rebuild_sample` on the FSB5 object passing the sample desired to be rebuilt.
+
+
+## License
+
+python-fsb5 is licensed under the terms of the MIT license.
+The full text of the license is available in the LICENSE file.
