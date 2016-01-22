@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
-from distutils.core import setup
+from setuptools import setup, find_packages
+import fsb5
+
 
 setup(
 	name='python-fsb5',
@@ -11,4 +13,5 @@ setup(
 	download_url='https://github.com/synap5e/python-fsb5/tarball/master',
 	license='MIT',
 	url='https://github.com/synap5e/python-fsb5',
+	packages=find_packages(),
 )
