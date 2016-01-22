@@ -23,18 +23,21 @@ class FSBExtractor:
 		parser.add_argument('-p', '--prefix-samples', action='store_true',
 			help='prefix extracted samples with the filename of the FSB container they were extracted from'
 		)
-		parser.add_argument('-q', '--quiet', action='store_true',
-			help='suppress most output'
-		)
 		parser.add_argument('-r', '--resource', action='store_true',
 			help="read multiple FSB5 files packed into the same file (e.g. Unity3D's .resource files)"
+		)
+		parser.add_argument('--verbose', action='store_true',
+			help='be more verbose during extraction'
 		)
 
 		return parser
 
 	def print(self, *args):
-		if not self.args.quiet:
-			print(*args)
+		print(*args)
+
+	def debug(self, *args):
+		if self.args.verbose:
+			self.print(*args)
 
 	def error(self, *args):
 		print(*args, file=sys.stderr)
@@ -58,29 +61,29 @@ class FSBExtractor:
 		fsb = fsb5.load(data)
 		ext = fsb.get_sample_extension()
 
-		self.print('Header:')
-		self.print('\tVersion: 5.%s' % (fsb.header.version))
-		self.print('\tSample count: %i' % (fsb.header.numSamples))
-		self.print('\tNamed samples: %s' % ('Yes' if fsb.header.nameTableSize else 'No'))
-		self.print('\tSound format: %s' % (fsb.header.mode.name.capitalize()))
+		self.debug('Header:')
+		self.debug('\tVersion: 5.%s' % (fsb.header.version))
+		self.debug('\tSample count: %i' % (fsb.header.numSamples))
+		self.debug('\tNamed samples: %s' % ('Yes' if fsb.header.nameTableSize else 'No'))
+		self.debug('\tSound format: %s' % (fsb.header.mode.name.capitalize()))
 
 		failed, written = [], []
-		self.print('Samples:')
+		self.debug('Samples:')
 		for sample in fsb.samples:
-			self.print('\t%s.%s' % (sample.name, ext))
-			self.print('Frequency: %iHz' % (sample.frequency))
-			self.print('Channels: %i' % (sample.channels))
-			self.print('Samples %r' % (sample.samples))
+			self.debug('\t%s.%s' % (sample.name, ext))
+			self.debug('Frequency: %iHz' % (sample.frequency))
+			self.debug('Channels: %i' % (sample.channels))
+			self.debug('Samples %r' % (sample.samples))
 
-			if sample.metadata:
+			if sample.metadata and self.args.verbose:
 				for meta_type, meta_value in sample.metadata.items():
 					if type(meta_type) is fsb5.MetadataChunkType:
 						contents = str(meta_value)
 						if len(contents) > 45:
 							contents = contents[:45] + '... )'
-						self.print('\t%s: %s' % (meta_type.name, contents))
+						self.debug('\t%s: %s' % (meta_type.name, contents))
 					else:
-						self.print('\t<unknown metadata type: %r>' % (meta_type))
+						self.debug('\t<unknown metadata type: %r>' % (meta_type))
 
 			sample_fakepath = '{0}:{1}.{2}'.format(name, sample.name, ext)
 			try:
@@ -90,15 +93,13 @@ class FSBExtractor:
 				failed.append((sample_fakepath, e))
 				self.error(e)
 
-		self.print('\n')
-
 		return failed, written, fsb.raw_size
 
 	def handle_file(self, f):
 		data = f.read()
 		prefix = os.path.splitext(os.path.basename(f.name))[0] if self.args.prefix_samples else ''
 
-		self.print('Reading FSB5 container: %s' % (f.name))
+		self.debug('Reading FSB5 container: %s' % (f.name))
 
 		if self.args.resource:
 			index = 0
