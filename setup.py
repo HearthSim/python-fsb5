@@ -1,7 +1,20 @@
 #!/usr/bin/env python3
 
-from setuptools import setup, find_packages
 import fsb5
+from setuptools import setup, find_packages
+
+
+CLASSIFIERS = [
+	'Development Status :: 4 - Beta',
+	'Intended Audience :: Developers',
+	'License :: OSI Approved :: MIT License',
+	'Programming Language :: Python',
+	'Programming Language :: Python :: 3',
+	'Programming Language :: Python :: 3.4',
+	'Programming Language :: Python :: 3.5',
+	'Topic :: Multimedia :: Sound/Audio',
+	'Topic :: Multimedia :: Sound/Audio :: Conversion',
+]
 
 
 setup(
@@ -13,5 +26,6 @@ setup(
 	download_url='https://github.com/synap5e/python-fsb5/tarball/master',
 	license='MIT',
 	url='https://github.com/synap5e/python-fsb5',
+	classifiers=CLASSIFIERS,
 	packages=find_packages(),
 )
