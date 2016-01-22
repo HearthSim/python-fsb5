@@ -11,7 +11,7 @@ parser.add_argument('fsb_file', nargs='*', type=argparse.FileType('rb'), default
 parser.add_argument('-o', '--output-directory', default='out',
 						help='output directory to write extracted samples into')
 parser.add_argument('-p', '--prefix-samples', action='store_true',
-						help='prefix extracted samples with the filename of the FSB container they where extracted from')
+						help='prefix extracted samples with the filename of the FSB container they were extracted from')
 parser.add_argument('-q', '--quiet', action='store_true',
 						help='suppress output of header and sample information (samples that failed to decode will still be printed)')
 parser.add_argument('-r', '--resource', action='store_true',
@@ -108,7 +108,7 @@ def main():
 			failed += nfailed
 			written += nwritten
 
-	print('The following filed where extracted:')
+	print('The following filed were extracted:')
 	for sample_fakepath, outpath in written:
 		print('\t' + sample_fakepath, '->', outpath)
 
