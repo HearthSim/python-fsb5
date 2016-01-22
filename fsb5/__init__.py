@@ -33,35 +33,35 @@ file_extensions = {
 	SoundFormat.VORBIS   : 'ogg'
 }
 
-FSB5Header = namedtuple('FSB5Header',
-	[	'id',
-		'version',
-		'numSamples',
-		'sampleHeadersSize',
-		'nameTableSize',
-		'dataSize',
-		'mode',
+FSB5Header = namedtuple('FSB5Header', [
+	'id',
+	'version',
+	'numSamples',
+	'sampleHeadersSize',
+	'nameTableSize',
+	'dataSize',
+	'mode',
 
-		'zero',
-		'hash',
-		'dummy',
+	'zero',
+	'hash',
+	'dummy',
 
-		'unknown',
+	'unknown',
 
-		'size'
-	])
+	'size'
+])
 
-Sample = namedtuple('Sample',
-	[	'name',
-		'frequency',
-		'channels',
-		'dataOffset',
-		'samples',
+Sample = namedtuple('Sample', [
+	'name',
+	'frequency',
+	'channels',
+	'dataOffset',
+	'samples',
 
-		'metadata',
+	'metadata',
 
-		'data'
-	])
+	'data'
+])
 
 frequency_values = {
 	1: 8000,
@@ -76,13 +76,13 @@ frequency_values = {
 }
 
 class MetadataChunkType(IntEnum):
-	CHANNELS=1
-	FREQUENCY=2
-	LOOP=3
-	XMASEEK=6
-	DSPCOEFF=7
-	XWMADATA=10
-	VORBISDATA=11
+	CHANNELS = 1
+	FREQUENCY = 2
+	LOOP = 3
+	XMASEEK = 6
+	DSPCOEFF = 7
+	XWMADATA = 10
+	VORBISDATA = 11
 
 chunk_data_format = {
 	MetadataChunkType.CHANNELS : 'B',
@@ -105,7 +105,7 @@ class FSB5():
 
 		magic = buf.read(4)
 		if magic != b'FSB5':
-			raise ValueError('Expected magic header \'FSB5\' but got %r' % (magic))
+			raise ValueError("Expected magic header 'FSB5' but got %r" % (magic))
 
 		buf.seek(0)
 		self.header = buf.read_struct_into(FSB5Header, '4s I I I I I I 8s 16s 8s')
@@ -144,8 +144,11 @@ class FSB5():
 					)
 				elif chunk_type in chunk_data_format:
 					fmt = chunk_data_format[chunk_type]
-					assert buf.struct_calcsize(fmt) == chunk_size, 'Expected chunk %s to be of size %d, but SampleHeader specified %d' % \
-																	(chunk_type, buf.struct_calcsize(fmt), chunk_size)
+					if buf.struct_calcsize(fmt) != chunk_size:
+						err = 'Expected chunk %s of size %d, SampleHeader specified %d' % (
+							chunk_type, buf.struct_calcsize(fmt), chunk_size
+						)
+						raise ValueError(err)
 					chunk_data = buf.read_struct(fmt)
 				else:
 					chunk_data = buf.read(chunk_size)
