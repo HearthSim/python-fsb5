@@ -102,7 +102,7 @@ class FSBExtractor:
 		if self.args.resource:
 			index = 0
 			while data:
-				nfailed, raw_size = self.extract_fsb(
+				raw_size = self.extract_fsb(
 					'{0}:{1}'.format(f.name, index),
 					data,
 					'{0}.{1}'.format(prefix, index) if prefix else str(index)
