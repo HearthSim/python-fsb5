@@ -67,7 +67,6 @@ class FSBExtractor:
 		self.debug('\tNamed samples: %s' % ('Yes' if fsb.header.nameTableSize else 'No'))
 		self.debug('\tSound format: %s' % (fsb.header.mode.name.capitalize()))
 
-		failed, written = [], []
 		self.debug('Samples:')
 		for sample in fsb.samples:
 			self.debug('\t%s.%s' % (sample.name, ext))
@@ -88,12 +87,11 @@ class FSBExtractor:
 			sample_fakepath = '{0}:{1}.{2}'.format(name, sample.name, ext)
 			try:
 				outpath = self.write_to_file(prefix, sample.name, ext, fsb.rebuild_sample(sample))
-				written.append((sample_fakepath, outpath))
+				self.print('%r -> %r' % (sample_fakepath, outpath))
 			except ValueError as e:
-				failed.append((sample_fakepath, e))
-				self.error(e)
+				self.error('FAILED to extract %r: %s' % (sample_fakepath, e))
 
-		return failed, written, fsb.raw_size
+		return fsb.raw_size
 
 	def handle_file(self, f):
 		data = f.read()
@@ -104,7 +102,7 @@ class FSBExtractor:
 		if self.args.resource:
 			index = 0
 			while data:
-				nfailed, nwritten, raw_size = self.extract_fsb(
+				nfailed, raw_size = self.extract_fsb(
 					'{0}:{1}'.format(f.name, index),
 					data,
 					'{0}.{1}'.format(prefix, index) if prefix else str(index)
@@ -112,28 +110,14 @@ class FSBExtractor:
 				data = data[raw_size:]
 				index += 1
 		else:
-			nfailed, nwritten, _ = self.extract_fsb(f.name, data, prefix)
-
-		return nfailed, nwritten
+			self.extract_fsb(f.name, data, prefix)
 
 	def run(self, args):
 		self.args = self.parser.parse_args(args)
 
-		failed, written = [], []
 		for fname in self.args.fsb_file:
 			with open(fname, 'rb') as f:
-				nfailed, nwritten = self.handle_file(f)
-			failed += nfailed
-			written += nwritten
-
-		print('The following files were extracted:')
-		for sample_fakepath, outpath in written:
-			print('\t' + sample_fakepath, '->', outpath)
-
-		if failed:
-			print('The following samples failed to be decoded:')
-			for sample_fakepath, reason in failed:
-				print('\t' + sample_fakepath, reason)
+				self.handle_file(f)
 
 		return 0
 
