@@ -5,6 +5,11 @@ from io import BytesIO
 from .utils import BinaryReader
 
 
+__version__ = '1.0'
+__author__ = 'Simon Pinfold'
+__email__ = 'simon@uint8.me'
+
+
 class SoundFormat(IntEnum):
 	NONE = 0
 	PCM8 = 1
