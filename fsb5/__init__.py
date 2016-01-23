@@ -192,7 +192,7 @@ class FSB5:
 		buf.seek(self.header.size + self.header.sampleHeadersSize + self.header.nameTableSize)
 		for i in range(self.header.numSamples):
 			data_start = self.samples[i].dataOffset
-			data_end   = buf.size
+			data_end   = data_start + self.header.dataSize
 			if i < self.header.numSamples-1:
 				data_end = self.samples[i+1].dataOffset
 			self.samples[i] = self.samples[i]._replace(data=buf.read(data_end - data_start))
