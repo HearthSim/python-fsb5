@@ -34,7 +34,13 @@ class SoundFormat(IntEnum):
 			return 'mp3'
 		elif self == SoundFormat.VORBIS:
 			return 'ogg'
+		elif self.is_pcm:
+			return 'wav'
 		return 'bin'
+
+	@property
+	def is_pcm(self):
+		return self in (SoundFormat.PCM8, SoundFormat.PCM16, SoundFormat.PCM32)
 
 
 FSB5Header = namedtuple('FSB5Header', [
@@ -176,7 +182,6 @@ class FSB5:
 				data=None
 			))
 
-
 		if self.header.nameTableSize:
 			nametable_start = buf.tell()
 
@@ -206,6 +211,15 @@ class FSB5:
 			# import here as vorbis.py requires native libraries
 			from . import vorbis
 			return vorbis.rebuild(sample)
+		elif self.header.mode.is_pcm:
+			from .pcm import rebuild
+			if self.header.mode == SoundFormat.PCM8:
+				width = 1
+			elif self.header.mode == SoundFormat.PCM16:
+				width = 2
+			else:
+				width = 4
+			return rebuild(sample, width)
 		else:
 			raise NotImplementedError('Decoding samples of type %s is not supported' % self.header.mode)
 
