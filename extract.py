@@ -20,12 +20,6 @@ class FSBExtractor:
 		parser.add_argument('-o', '--output-directory', default='out/',
 			help='output directory to write extracted samples into'
 		)
-		parser.add_argument('-p', '--prefix-samples', action='store_true',
-			help='prefix extracted samples with the filename of the FSB container they were extracted from'
-		)
-		parser.add_argument('-r', '--resource', action='store_true',
-			help="read multiple FSB5 files packed into the same file (e.g. Unity3D's .resource files)"
-		)
 		parser.add_argument('--verbose', action='store_true',
 			help='be more verbose during extraction'
 		)
@@ -57,7 +51,7 @@ class FSBExtractor:
 			written = f.write(contents)
 		return path
 
-	def extract_fsb(self, name, data, prefix):
+	def load_fsb(self, data):
 		fsb = fsb5.load(data)
 		ext = fsb.get_sample_extension()
 
@@ -67,6 +61,9 @@ class FSBExtractor:
 		self.debug('\tNamed samples: %s' % ('Yes' if fsb.header.nameTableSize else 'No'))
 		self.debug('\tSound format: %s' % (fsb.header.mode.name.capitalize()))
 
+		return fsb, ext
+
+	def read_samples(self, fsb_name, fsb, ext):
 		self.debug('Samples:')
 		for sample in fsb.samples:
 			self.debug('\t%s.%s' % (sample.name, ext))
@@ -84,35 +81,37 @@ class FSBExtractor:
 					else:
 						self.debug('\t<unknown metadata type: %r>' % (meta_type))
 
-			sample_fakepath = '{0}:{1}.{2}'.format(name, sample.name, ext)
+			sample_fakepath = '{0}:{1}.{2}'.format(fsb_name, sample.name, ext)
 			try:
-				outpath = self.write_to_file(prefix, sample.name, ext, fsb.rebuild_sample(sample))
-				self.print('%r -> %r' % (sample_fakepath, outpath))
+				yield sample_fakepath, sample.name, fsb.rebuild_sample(sample)
 			except ValueError as e:
 				self.error('FAILED to extract %r: %s' % (sample_fakepath, e))
 
-			self.debug('')
-
-		return fsb.raw_size
-
 	def handle_file(self, f):
 		data = f.read()
-		prefix = os.path.splitext(os.path.basename(f.name))[0] if self.args.prefix_samples else ''
+		fsb_name = os.path.splitext(os.path.basename(f.name))[0]
 
 		self.debug('Reading FSB5 container: %s' % (f.name))
 
-		if self.args.resource:
-			index = 0
-			while data:
-				raw_size = self.extract_fsb(
-					'{0}:{1}'.format(f.name, index),
-					data,
-					'{0}-{1}'.format(prefix, index) if prefix else str(index)
-				)
-				data = data[raw_size:]
-				index += 1
-		else:
-			self.extract_fsb(f.name, data, prefix)
+		is_resource = False
+		index = 0
+		while data:
+			fsb, ext = self.load_fsb(data)
+
+			data = data[fsb.raw_size:]
+			if not is_resource and data:
+				is_resource = True
+
+			sample_prefix = fsb_name
+			fakepath_prefix = fsb_name
+			if is_resource:
+				sample_prefix += '-%d' % (index)
+				fakepath_prefix += ':%d' % (index)
+			for sample_fakepath, sample_name, sample_data in self.read_samples(fakepath_prefix, fsb, ext):
+				outpath = self.write_to_file(sample_prefix, sample_name, ext, sample_data)
+				self.print('%r -> %r' % (sample_fakepath, outpath))
+
+			index += 1
 
 	def run(self, args):
 		self.args = self.parser.parse_args(args)

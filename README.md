@@ -25,18 +25,17 @@ optional arguments:
   -h, --help            show this help message and exit
   -o OUTPUT_DIRECTORY, --output-directory OUTPUT_DIRECTORY
                         output directory to write extracted samples into
-  -p, --prefix-samples  prefix extracted samples with the filename of the FSB
-                        container they where extracted from
   -q, --quiet           suppress output of header and sample information
                         (samples that failed to decode will still be printed)
-  -r, --resource        read multiple FSB5 files packed into the same file
-                        (e.g. Unity3D's .resource files)
  ```
 
 #### Resource files
 Unity3D packs multiple FSB5 files each containing a single sample into it's `.resource` files.
-To extract all samples across all FSB5 files packed into the `.resource` file use `--resource`.
-Output files will be prefixed with the index of their FSB container within the resource file.
+python-fsb5 will automatically extract all samples if multiple FSB5s are found within one file.
+Output files will be prefixed with the (0 based) index of their FSB container within the resource file e.g. `out/sounds-15-track1.wav` is the path for a WAVE sample named track1 which is contained within the 16th FSB file within sounds.resource.
+
+#### Unnamed samples
+FSB5 does not require samples to store a name. If samples are stored without a name they will use their index within the FSB e.g. `sounds-0000.mp3` is the first sample in sounds.fsb.
 
 ## Requirements
 
