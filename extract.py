@@ -61,7 +61,7 @@ class FSBExtractor:
 		fsb = fsb5.load(data)
 		ext = fsb.get_sample_extension()
 
-		self.debug('Header:')
+		self.debug('\nHeader:')
 		self.debug('\tVersion: 5.%s' % (fsb.header.version))
 		self.debug('\tSample count: %i' % (fsb.header.numSamples))
 		self.debug('\tNamed samples: %s' % ('Yes' if fsb.header.nameTableSize else 'No'))
@@ -70,9 +70,9 @@ class FSBExtractor:
 		self.debug('Samples:')
 		for sample in fsb.samples:
 			self.debug('\t%s.%s' % (sample.name, ext))
-			self.debug('Frequency: %iHz' % (sample.frequency))
-			self.debug('Channels: %i' % (sample.channels))
-			self.debug('Samples %r' % (sample.samples))
+			self.debug('\tFrequency: %iHz' % (sample.frequency))
+			self.debug('\tChannels: %i' % (sample.channels))
+			self.debug('\tSamples %r' % (sample.samples))
 
 			if sample.metadata and self.args.verbose:
 				for meta_type, meta_value in sample.metadata.items():
@@ -90,6 +90,8 @@ class FSBExtractor:
 				self.print('%r -> %r' % (sample_fakepath, outpath))
 			except ValueError as e:
 				self.error('FAILED to extract %r: %s' % (sample_fakepath, e))
+
+			self.debug('')
 
 		return fsb.raw_size
 
