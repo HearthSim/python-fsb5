@@ -25,123 +25,171 @@ def load_lib(*names):
 			pass
 	raise LibraryNotFoundException('Could not load the library %r' % (names[0]))
 
-vorbis    = load_lib('vorbis')
+vorbis = load_lib('vorbis')
 vorbisenc = load_lib('vorbisenc', 'vorbis')
-ogg       = load_lib('ogg')
+ogg = load_lib('ogg')
+
+
+class VorbisEncodeRequest(IntEnum):
+	OV_ECTL_RATEMANAGE2_GET = 0x14
+	OV_ECTL_RATEMANAGE2_SET = 0x15
+	OV_ECTL_LOWPASS_GET     = 0x20
+	OV_ECTL_LOWPASS_SET     = 0x21
+	OV_ECTL_IBLOCK_GET      = 0x30
+	OV_ECTL_IBLOCK_SET      = 0x31
+	OV_ECTL_COUPLING_GET    = 0x40
+	OV_ECTL_COUPLING_SET    = 0x41
+	OV_ECTL_RATEMANAGE_GET  = 0x10
+	OV_ECTL_RATEMANAGE_SET  = 0x11
+	OV_ECTL_RATEMANAGE_AVG  = 0x12
+	OV_ECTL_RATEMANAGE_HARD = 0x13
+
 
 class VorbisInfo(ctypes.Structure):
-	""" https://xiph.org/vorbis/doc/libvorbis/vorbis_info.html """
-	_fields_ = [('version', 			ctypes.c_int),
-				('channels', 			ctypes.c_int),
-				('rate', 				ctypes.c_long),
-				('bitrate_upper', 		ctypes.c_long),
-				('bitrate_nominal', 	ctypes.c_long),
-				('bitrate_lower', 		ctypes.c_long),
-				('bitrate_window', 		ctypes.c_long),
-				('codec_setup', 		ctypes.c_void_p)]
+	"""
+	https://xiph.org/vorbis/doc/libvorbis/vorbis_info.html
+	"""
+	_fields_ = [
+		('version', ctypes.c_int),
+		('channels', ctypes.c_int),
+		('rate', ctypes.c_long),
+		('bitrate_upper', ctypes.c_long),
+		('bitrate_nominal', ctypes.c_long),
+		('bitrate_lower', ctypes.c_long),
+		('bitrate_window', ctypes.c_long),
+		('codec_setup', ctypes.c_void_p),
+	]
 
 	def __init__(self):
-		super(ctypes.Structure, self).__init__()
+		super().__init__()
 		vorbis.vorbis_info_init(self)
 
 	def __del__(self):
 		vorbis.vorbis_info_clear(self)
 
+
 class VorbisComment(ctypes.Structure):
-	""" https://xiph.org/vorbis/doc/libvorbis/vorbis_info.html """
-	_fields_ = [('user_comments', 		ctypes.POINTER(ctypes.c_char_p)),
-				('comment_lengths', 	ctypes.POINTER(ctypes.c_int)),
-				('comments', 			ctypes.c_int),
-				('vendor', 				ctypes.c_char_p)]
+	"""
+	https://xiph.org/vorbis/doc/libvorbis/vorbis_info.html
+	"""
+	_fields_ = [
+		('user_comments', ctypes.POINTER(ctypes.c_char_p)),
+		('comment_lengths', ctypes.POINTER(ctypes.c_int)),
+		('comments', ctypes.c_int),
+		('vendor', ctypes.c_char_p)
+	]
 
 	def __init__(self):
-		super(ctypes.Structure, self).__init__()
+		super().__init__()
 		vorbis.vorbis_comment_init(self)
 
 	def __del__(self):
 		vorbis.vorbis_comment_clear(self)
 
+
 class VorbisDSPState(ctypes.Structure):
-	""" https://svn.xiph.org/trunk/vorbis/include/vorbis/codec.h """
-	_fields_ = [('analysisp', 			ctypes.c_int),
-				('vi', 					ctypes.c_void_p),
-				('pcm', 				ctypes.POINTER(ctypes.POINTER(ctypes.c_float))),
-				('pcmret', 				ctypes.POINTER(ctypes.POINTER(ctypes.c_float))),
-				('pcm_storage', 		ctypes.c_int),
-				('pcm_current', 		ctypes.c_int),
-				('pcm_returned', 		ctypes.c_int),
-				('preextrapolate', 		ctypes.c_int),
-				('eofflag', 			ctypes.c_int),
-				('lW', 					ctypes.c_long),
-				('W', 					ctypes.c_long),
-				('nW', 					ctypes.c_long),
-				('centerW', 			ctypes.c_long),
-				('granulepos', 			ctypes.c_longlong),
-				('sequence', 			ctypes.c_longlong),
-				('glue_bits', 			ctypes.c_longlong),
-				('time_bits', 			ctypes.c_longlong),
-				('floor_bits', 			ctypes.c_longlong),
-				('res_bits', 			ctypes.c_longlong),
-				('backend_state', 		ctypes.c_void_p)]
+	"""
+	https://svn.xiph.org/trunk/vorbis/include/vorbis/codec.h
+	"""
+	_fields_ = [
+		('analysisp', ctypes.c_int),
+		('vi', ctypes.c_void_p),
+		('pcm', ctypes.POINTER(ctypes.POINTER(ctypes.c_float))),
+		('pcmret', ctypes.POINTER(ctypes.POINTER(ctypes.c_float))),
+		('pcm_storage', ctypes.c_int),
+		('pcm_current', ctypes.c_int),
+		('pcm_returned', ctypes.c_int),
+		('preextrapolate', ctypes.c_int),
+		('eofflag', ctypes.c_int),
+		('lW', ctypes.c_long),
+		('W', ctypes.c_long),
+		('nW', ctypes.c_long),
+		('centerW', ctypes.c_long),
+		('granulepos', ctypes.c_longlong),
+		('sequence', ctypes.c_longlong),
+		('glue_bits', ctypes.c_longlong),
+		('time_bits', ctypes.c_longlong),
+		('floor_bits', ctypes.c_longlong),
+		('res_bits', ctypes.c_longlong),
+		('backend_state', ctypes.c_void_p)
+	]
+
 
 class OggStreamState(ctypes.Structure):
-	""" https://xiph.org/ogg/doc/libogg/ogg_stream_state.html """
-	_fields_ = [('body_data', 			ctypes.POINTER(ctypes.c_char)),
-				('body_storage', 		ctypes.c_long),
-				('body_fill', 			ctypes.c_long),
-				('body_returned', 		ctypes.c_long),
-				('lacing_vals', 		ctypes.POINTER(ctypes.c_int)),
-				('granule_vals', 		ctypes.POINTER(ctypes.c_longlong)),
-				('lacing_storage', 		ctypes.c_long),
-				('lacing_fill', 		ctypes.c_long),
-				('lacing_packet', 		ctypes.c_long),
-				('lacing_returned', 	ctypes.c_long),
-				('header', 				ctypes.c_char * 282),
-				('header_fill', 		ctypes.c_int),
-				('e_o_s', 				ctypes.c_int),
-				('b_o_s', 				ctypes.c_int),
-				('serialno', 			ctypes.c_long),
-				('pageno', 				ctypes.c_int),
-				('packetno', 			ctypes.c_longlong),
-				('granulepos', 			ctypes.c_longlong)]
+	"""
+	https://xiph.org/ogg/doc/libogg/ogg_stream_state.html
+	"""
+	_fields_ = [
+		('body_data', ctypes.POINTER(ctypes.c_char)),
+		('body_storage', ctypes.c_long),
+		('body_fill', ctypes.c_long),
+		('body_returned', ctypes.c_long),
+		('lacing_vals', ctypes.POINTER(ctypes.c_int)),
+		('granule_vals', ctypes.POINTER(ctypes.c_longlong)),
+		('lacing_storage', ctypes.c_long),
+		('lacing_fill', ctypes.c_long),
+		('lacing_packet', ctypes.c_long),
+		('lacing_returned', ctypes.c_long),
+		('header', ctypes.c_char * 282),
+		('header_fill', ctypes.c_int),
+		('e_o_s', ctypes.c_int),
+		('b_o_s', ctypes.c_int),
+		('serialno', ctypes.c_long),
+		('pageno', ctypes.c_int),
+		('packetno', ctypes.c_longlong),
+		('granulepos', ctypes.c_longlong)
+	]
 
 	def __init__(self, serialno):
-		super(ctypes.Structure, self).__init__()
+		super().__init__()
 		ogg.ogg_stream_init(self, serialno)
 
 	def __del__(self):
 		ogg.ogg_stream_clear(self)
 
+
 class OggPacket(ctypes.Structure):
-	""" https://xiph.org/ogg/doc/libogg/ogg_packet.html """
-	_fields_ = [('packet', 				ctypes.POINTER(ctypes.c_char)),
-				('bytes', 				ctypes.c_long),
-				('b_o_s', 				ctypes.c_long),
-				('e_o_s', 				ctypes.c_long),
-				('granulepos', 			ctypes.c_longlong),
-				('packetno', 			ctypes.c_longlong)]
+	"""
+	https://xiph.org/ogg/doc/libogg/ogg_packet.html
+	"""
+	_fields_ = [
+		('packet', ctypes.POINTER(ctypes.c_char)),
+		('bytes', ctypes.c_long),
+		('b_o_s', ctypes.c_long),
+		('e_o_s', ctypes.c_long),
+		('granulepos', ctypes.c_longlong),
+		('packetno', ctypes.c_longlong)
+	]
 
 class OggpackBuffer(ctypes.Structure):
-	""" https://xiph.org/ogg/doc/libogg/oggpack_buffer.html """
-	_fields_ = [('endbyte', 			ctypes.c_long),
-				('endbit', 				ctypes.c_int),
-				('buffer', 				ctypes.POINTER(ctypes.c_char)),
-				('ptr', 				ctypes.POINTER(ctypes.c_char)),
-				('storage', 			ctypes.c_long)]
+	"""
+	https://xiph.org/ogg/doc/libogg/oggpack_buffer.html
+	"""
+	_fields_ = [
+		('endbyte', ctypes.c_long),
+		('endbit', ctypes.c_int),
+		('buffer', ctypes.POINTER(ctypes.c_char)),
+		('ptr', ctypes.POINTER(ctypes.c_char)),
+		('storage', ctypes.c_long)
+	]
 
 	def __init__(self):
-		super(ctypes.Structure, self).__init__()
+		super().__init__()
 		ogg.oggpack_writeinit(self)
 
 	def __del__(self):
 		ogg.oggpack_writeclear(self)
 
 class OggPage(ctypes.Structure):
-	""" https://xiph.org/ogg/doc/libogg/oggpack_buffer.html """
-	_fields_ = [('header', 			ctypes.POINTER(ctypes.c_char)),
-				('header_len', 		ctypes.c_long),
-				('body', 			ctypes.POINTER(ctypes.c_char)),
-				('body_len', 		ctypes.c_long)]
+	"""
+	https://xiph.org/ogg/doc/libogg/oggpack_buffer.html
+	"""
+	_fields_ = [
+		('header', ctypes.POINTER(ctypes.c_char)),
+		('header_len', ctypes.c_long),
+		('body', ctypes.POINTER(ctypes.c_char)),
+		('body_len', ctypes.c_long)
+	]
 
 def errcheck(result, func, arguments):
 	if result != 0:
@@ -165,8 +213,13 @@ vorbis.vorbis_comment_clear.restype = None
 vorbis.vorbis_analysis_init.argtypes = [ctypes.POINTER(VorbisDSPState), ctypes.POINTER(VorbisInfo)]
 vorbis.vorbis_analysis_init.errcheck = errcheck
 
-vorbis.vorbis_analysis_headerout.argtypes = [ctypes.POINTER(VorbisDSPState), ctypes.POINTER(VorbisComment), ctypes.POINTER(OggPacket),
-												ctypes.POINTER(OggPacket), ctypes.POINTER(OggPacket)]
+vorbis.vorbis_analysis_headerout.argtypes = [
+	ctypes.POINTER(VorbisDSPState),
+	ctypes.POINTER(VorbisComment),
+	ctypes.POINTER(OggPacket),
+	ctypes.POINTER(OggPacket),
+	ctypes.POINTER(OggPacket)
+]
 vorbis.vorbis_analysis_headerout.errcheck = errcheck
 
 vorbis.vorbis_dsp_clear.argtypes = [ctypes.POINTER(VorbisDSPState)]
@@ -175,9 +228,15 @@ vorbis.vorbis_dsp_clear.restype = None
 vorbis.vorbis_commentheader_out.argtypes = [ctypes.POINTER(VorbisComment), ctypes.POINTER(OggPacket)]
 vorbis.vorbis_commentheader_out.errcheck = errcheck
 
-######## libvorbisenc functions ########
+##
+# libvorbisenc functions
 
-vorbisenc.vorbis_encode_setup_vbr.argtypes = [ctypes.POINTER(VorbisInfo), ctypes.c_long, ctypes.c_long, ctypes.c_float]
+vorbisenc.vorbis_encode_setup_vbr.argtypes = [
+	ctypes.POINTER(VorbisInfo),
+	ctypes.c_long,
+	ctypes.c_long,
+	ctypes.c_float
+]
 vorbisenc.vorbis_encode_setup_vbr.errcheck = errcheck
 
 vorbisenc.vorbis_encode_ctl.argtypes = [ctypes.POINTER(VorbisInfo), ctypes.c_int, ctypes.c_void_p]
@@ -189,8 +248,13 @@ vorbisenc.vorbis_encode_setup_init.errcheck = errcheck
 vorbis.vorbis_info_blocksize.argtypes = [ctypes.POINTER(VorbisInfo), ctypes.c_int]
 vorbis.vorbis_info_blocksize.restype = ctypes.c_int
 
-vorbis.vorbis_synthesis_headerin.argtypes = [ctypes.POINTER(VorbisInfo), ctypes.POINTER(VorbisComment), ctypes.POINTER(OggPacket)]
+vorbis.vorbis_synthesis_headerin.argtypes = [
+	ctypes.POINTER(VorbisInfo),
+	ctypes.POINTER(VorbisComment),
+	ctypes.POINTER(OggPacket)
+]
 vorbis.vorbis_synthesis_headerin.errcheck = errcheck
+
 
 def vorbis_packet_blocksize_errcheck(result, func, arguments):
 	if result < 0:
@@ -200,19 +264,6 @@ def vorbis_packet_blocksize_errcheck(result, func, arguments):
 vorbis.vorbis_packet_blocksize.argtypes = [ctypes.POINTER(VorbisInfo), ctypes.POINTER(OggPacket)]
 vorbis.vorbis_packet_blocksize.errcheck = vorbis_packet_blocksize_errcheck
 
-class VorbisEncodeRequest(IntEnum):
-	OV_ECTL_RATEMANAGE2_GET = 0x14
-	OV_ECTL_RATEMANAGE2_SET = 0x15
-	OV_ECTL_LOWPASS_GET     = 0x20
-	OV_ECTL_LOWPASS_SET     = 0x21
-	OV_ECTL_IBLOCK_GET      = 0x30
-	OV_ECTL_IBLOCK_SET      = 0x31
-	OV_ECTL_COUPLING_GET    = 0x40
-	OV_ECTL_COUPLING_SET    = 0x41
-	OV_ECTL_RATEMANAGE_GET  = 0x10
-	OV_ECTL_RATEMANAGE_SET  = 0x11
-	OV_ECTL_RATEMANAGE_AVG  = 0x12
-	OV_ECTL_RATEMANAGE_HARD = 0x13
 
 ######## libogg functions ########
 
@@ -258,10 +309,11 @@ def rebuild(sample):
 	if MetadataChunkType.VORBISDATA not in sample.metadata:
 		raise ValueError('Expected sample header to contain a VORBISDATA chunk but none was found')
 
+	crc32 = sample.metadata[MetadataChunkType.VORBISDATA].crc32
 	try:
-		quality, channels, rate = vorbis_header_lookup[sample.metadata[MetadataChunkType.VORBISDATA].crc32]
+		quality, channels, rate = vorbis_header_lookup[crc32]
 	except KeyError as e:
-		raise ValueError('Could not find header info for crc32=%d' % sample.metadata[MetadataChunkType.VORBISDATA].crc32) from e
+		raise ValueError('Could not find header info for crc32=%d' % crc32) from e
 	blocksize_short, blocksize_long, setup_packet_buff = get_header_info(quality, channels, rate)
 
 	info = VorbisInfo()
@@ -318,11 +370,13 @@ def rebuild(sample):
 
 	return outbuf.getbuffer()
 
+
 def write_packets(state, buf, func=ogg.ogg_stream_pageout):
 	page = OggPage()
 	while func(state, page):
 		buf.write(bytes(page.header[:page.header_len]))
 		buf.write(bytes(page.body[:page.body_len]))
+
 
 def rebuild_id_header(channels, frequency, blocksize_short, blocksize_long):
 	packet = OggPacket()
@@ -337,8 +391,8 @@ def rebuild_id_header(channels, frequency, blocksize_short, blocksize_long):
 	ogg.oggpack_write(buf, 0, 32)
 	ogg.oggpack_write(buf, 0, 32)
 	ogg.oggpack_write(buf, 0, 32)
-	ogg.oggpack_write(buf, len(bin(blocksize_short))-3, 4)
-	ogg.oggpack_write(buf, len(bin(blocksize_long))-3, 4)
+	ogg.oggpack_write(buf, len(bin(blocksize_short)) - 3, 4)
+	ogg.oggpack_write(buf, len(bin(blocksize_long)) - 3, 4)
 	ogg.oggpack_write(buf, 1, 1)
 
 	if hasattr(ogg, 'oggpack_writecheck'):
@@ -354,6 +408,7 @@ def rebuild_id_header(channels, frequency, blocksize_short, blocksize_long):
 
 	return packet
 
+
 def rebuild_comment_header():
 	packet = OggPacket()
 	ogg.ogg_packet_clear(packet)
@@ -362,6 +417,7 @@ def rebuild_comment_header():
 	vorbis.vorbis_commentheader_out(comment, packet)
 
 	return packet
+
 
 def rebuild_setup_header(setup_packet_buff):
 	packet = OggPacket()
@@ -375,12 +431,13 @@ def rebuild_setup_header(setup_packet_buff):
 
 	return packet
 
+
 def lerp(x, x_0, x_1, y_0, y_1):
 	return y_0 + (y_1 - y_0) * ((x - x_0) / (x_1 - x_0))
 
+
 def get_header_info(quality, channels, rate):
 	vorbis_quality = lerp(quality, 0, 100, -0.1, 1.0)
-	#import pdb; pdb.set_trace()
 
 	info    = VorbisInfo()
 	comment = VorbisComment()
