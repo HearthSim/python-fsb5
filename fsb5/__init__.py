@@ -128,8 +128,6 @@ class FSB5:
 			dataOffset 	= bits(raw, 1+4+1,    28) * 16
 			samples     = bits(raw, 1+4+1+28, 30)
 
-			frequency = frequency_values[frequency]
-
 			chunks = {}
 			while next_chunk:
 				raw = buf.read_type('I')
@@ -158,6 +156,13 @@ class FSB5:
 					chunk_data = buf.read(chunk_size)
 
 				chunks[chunk_type] = chunk_data
+
+			if MetadataChunkType.FREQUENCY in chunks:
+				frequency = chunks[MetadataChunkType.FREQUENCY][0]
+			elif frequency in frequency_values:
+				frequency = frequency_values[frequency]
+			else:
+				raise ValueError('Frequency value %d is not valid and no FREQUENCY metadata chunk was provided')
 
 			self.samples.append(Sample(
 				name 		= '%04d' % i,
