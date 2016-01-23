@@ -1,3 +1,4 @@
+import ctypes
 import struct
 
 
@@ -54,3 +55,21 @@ class BinaryReader:
 		if len(r) != 1:
 			raise ValueError('Format %r did not describe a single type' % (type_fmt))
 		return r[0]
+
+
+class LibraryNotFoundException(OSError):
+    pass
+
+
+def load_lib(*names):
+	for name in names:
+		try:
+			libname = ctypes.util.find_library(name)
+			if libname:
+				return ctypes.CDLL(libname)
+			else:
+				dll_path = os.path.join(os.getcwd(), 'lib%s.dll' % name)
+				return ctypes.CDLL(dll_path)
+		except OSError:
+			pass
+	raise LibraryNotFoundException('Could not load the library %r' % (names[0]))

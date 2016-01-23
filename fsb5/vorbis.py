@@ -5,25 +5,9 @@ from enum import IntEnum
 from io import BytesIO
 
 from . import *
-from .utils import BinaryReader
+from .utils import BinaryReader, load_lib
 from .vorbis_headers import lookup as vorbis_header_lookup
 
-
-class LibraryNotFoundException(OSError):
-    pass
-
-def load_lib(*names):
-	for name in names:
-		try:
-			libname = ctypes.util.find_library(name)
-			if libname:
-				return ctypes.CDLL(libname)
-			else:
-				dll_path = os.path.join(os.getcwd(), 'lib%s.dll' % name)
-				return ctypes.CDLL(dll_path)
-		except OSError:
-			pass
-	raise LibraryNotFoundException('Could not load the library %r' % (names[0]))
 
 vorbis = load_lib('vorbis')
 vorbisenc = load_lib('vorbisenc', 'vorbis')
