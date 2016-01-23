@@ -105,7 +105,7 @@ class FSBExtractor:
 				raw_size = self.extract_fsb(
 					'{0}:{1}'.format(f.name, index),
 					data,
-					'{0}.{1}'.format(prefix, index) if prefix else str(index)
+					'{0}-{1}'.format(prefix, index) if prefix else str(index)
 				)
 				data = data[raw_size:]
 				index += 1
