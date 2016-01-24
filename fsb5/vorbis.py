@@ -421,7 +421,7 @@ def lerp(x, x_0, x_1, y_0, y_1):
 
 
 def get_header_info(quality, channels, rate):
-	vorbis_quality = lerp(quality, 0, 100, -0.1, 1.0)
+	vorbis_quality = lerp(quality, 1, 100, -0.1, 1.0)
 
 	info    = VorbisInfo()
 	comment = VorbisComment()
