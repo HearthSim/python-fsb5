@@ -5,9 +5,9 @@ from io import BytesIO
 from .utils import BinaryReader
 
 
-__version__ = '1.0'
-__author__ = 'Simon Pinfold'
-__email__ = 'simon@uint8.me'
+__version__ = "1.0"
+__author__ = "Simon Pinfold"
+__email__ = "simon@uint8.me"
 
 
 class SoundFormat(IntEnum):
@@ -31,46 +31,46 @@ class SoundFormat(IntEnum):
 	@property
 	def file_extension(self):
 		if self == SoundFormat.MPEG:
-			return 'mp3'
+			return "mp3"
 		elif self == SoundFormat.VORBIS:
-			return 'ogg'
+			return "ogg"
 		elif self.is_pcm:
-			return 'wav'
-		return 'bin'
+			return "wav"
+		return "bin"
 
 	@property
 	def is_pcm(self):
 		return self in (SoundFormat.PCM8, SoundFormat.PCM16, SoundFormat.PCM32)
 
 
-FSB5Header = namedtuple('FSB5Header', [
-	'id',
-	'version',
-	'numSamples',
-	'sampleHeadersSize',
-	'nameTableSize',
-	'dataSize',
-	'mode',
+FSB5Header = namedtuple("FSB5Header", [
+	"id",
+	"version",
+	"numSamples",
+	"sampleHeadersSize",
+	"nameTableSize",
+	"dataSize",
+	"mode",
 
-	'zero',
-	'hash',
-	'dummy',
+	"zero",
+	"hash",
+	"dummy",
 
-	'unknown',
+	"unknown",
 
-	'size'
+	"size"
 ])
 
-Sample = namedtuple('Sample', [
-	'name',
-	'frequency',
-	'channels',
-	'dataOffset',
-	'samples',
+Sample = namedtuple("Sample", [
+	"name",
+	"frequency",
+	"channels",
+	"dataOffset",
+	"samples",
 
-	'metadata',
+	"metadata",
 
-	'data'
+	"data"
 ])
 
 frequency_values = {
@@ -95,12 +95,12 @@ class MetadataChunkType(IntEnum):
 	VORBISDATA = 11
 
 chunk_data_format = {
-	MetadataChunkType.CHANNELS : 'B',
-	MetadataChunkType.FREQUENCY: 'I',
-	MetadataChunkType.LOOP: 'II'
+	MetadataChunkType.CHANNELS : "B",
+	MetadataChunkType.FREQUENCY: "I",
+	MetadataChunkType.LOOP: "II"
 }
 
-VorbisData = namedtuple('VorbisData', ['crc32', 'unknown'])
+VorbisData = namedtuple("VorbisData", ["crc32", "unknown"])
 
 
 def bits(val, start, len):
@@ -111,23 +111,23 @@ def bits(val, start, len):
 
 class FSB5:
 	def __init__(self, data):
-		buf = BinaryReader(BytesIO(data), endian='<')
+		buf = BinaryReader(BytesIO(data), endian="<")
 
 		magic = buf.read(4)
-		if magic != b'FSB5':
+		if magic != b"FSB5":
 			raise ValueError("Expected magic header 'FSB5' but got %r" % (magic))
 
 		buf.seek(0)
-		self.header = buf.read_struct_into(FSB5Header, '4s I I I I I I 8s 16s 8s')
+		self.header = buf.read_struct_into(FSB5Header, "4s I I I I I I 8s 16s 8s")
 		if self.header.version == 0:
-			self.header = self.header._replace(unknown=buf.read_type('I'))
+			self.header = self.header._replace(unknown=buf.read_type("I"))
 		self.header = self.header._replace(mode=SoundFormat(self.header.mode), size=buf.tell())
 
 		self.raw_size = self.header.size + self.header.sampleHeadersSize + self.header.nameTableSize + self.header.dataSize
 
 		self.samples = []
 		for i in range(self.header.numSamples):
-			raw = buf.read_type('Q')
+			raw = buf.read_type("Q")
 			next_chunk  = bits(raw, 0,        1)
 			frequency   = bits(raw, 1,        4)
 			channels    = bits(raw, 1+4,      1)  + 1
@@ -136,7 +136,7 @@ class FSB5:
 
 			chunks = {}
 			while next_chunk:
-				raw = buf.read_type('I')
+				raw = buf.read_type("I")
 				next_chunk = bits(raw, 0,    1)
 				chunk_size = bits(raw, 1,    24)
 				chunk_type = bits(raw, 1+24, 7)
@@ -145,15 +145,16 @@ class FSB5:
 					chunk_type = MetadataChunkType(chunk_type)
 				except ValueError:
 					pass
+
 				if chunk_type == MetadataChunkType.VORBISDATA:
 					chunk_data = VorbisData(
-						crc32   = buf.read_type('I'),
+						crc32   = buf.read_type("I"),
 						unknown = buf.read(chunk_size-4)
 					)
 				elif chunk_type in chunk_data_format:
 					fmt = chunk_data_format[chunk_type]
 					if buf.struct_calcsize(fmt) != chunk_size:
-						err = 'Expected chunk %s of size %d, SampleHeader specified %d' % (
+						err = "Expected chunk %s of size %d, SampleHeader specified %d" % (
 							chunk_type, buf.struct_calcsize(fmt), chunk_size
 						)
 						raise ValueError(err)
@@ -168,17 +169,15 @@ class FSB5:
 			elif frequency in frequency_values:
 				frequency = frequency_values[frequency]
 			else:
-				raise ValueError('Frequency value %d is not valid and no FREQUENCY metadata chunk was provided')
+				raise ValueError("Frequency value %d is not valid and no FREQUENCY metadata chunk was provided")
 
 			self.samples.append(Sample(
-				name 		= '%04d' % i,
-				frequency 	= frequency,
-				channels 	= channels,
-				dataOffset 	= dataOffset,
-				samples 	= samples,
-
+				name="%04d" % (i),
+				frequency=frequency,
+				channels=channels,
+				dataOffset=dataOffset,
+				samples=samples,
 				metadata=chunks,
-
 				data=None
 			))
 
@@ -187,12 +186,12 @@ class FSB5:
 
 			samplename_offsets = []
 			for i in range(self.header.numSamples):
-				samplename_offsets.append(buf.read_type('I'))
+				samplename_offsets.append(buf.read_type("I"))
 
 			for i in range(self.header.numSamples):
 				buf.seek(nametable_start + samplename_offsets[i])
 				name = buf.read_string(maxlen=self.header.nameTableSize)
-				self.samples[i] = self.samples[i]._replace(name=name.decode('utf-8'))
+				self.samples[i] = self.samples[i]._replace(name=name.decode("utf-8"))
 
 		buf.seek(self.header.size + self.header.sampleHeadersSize + self.header.nameTableSize)
 		for i in range(self.header.numSamples):
@@ -204,7 +203,7 @@ class FSB5:
 
 	def rebuild_sample(self, sample):
 		if sample not in self.samples:
-			raise ValueError('Sample to decode did not originate from the FSB archive decoding it')
+			raise ValueError("Sample to decode did not originate from the FSB archive decoding it")
 		if self.header.mode == SoundFormat.MPEG:
 			return sample.data
 		elif self.header.mode == SoundFormat.VORBIS:
@@ -220,8 +219,8 @@ class FSB5:
 			else:
 				width = 4
 			return rebuild(sample, width)
-		else:
-			raise NotImplementedError('Decoding samples of type %s is not supported' % self.header.mode)
+
+		raise NotImplementedError("Decoding samples of type %s is not supported" % (self.header.mode))
 
 	def get_sample_extension(self):
 		return self.header.mode.file_extension

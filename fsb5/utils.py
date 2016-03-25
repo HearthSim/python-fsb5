@@ -4,7 +4,7 @@ import struct
 
 
 class BinaryReader:
-	def __init__(self, buf, endian='<'):
+	def __init__(self, buf, endian="<"):
 		self.buf = buf
 		self.endian = endian
 		self.seek(0, 2)
@@ -29,11 +29,11 @@ class BinaryReader:
 		while maxlen == 0 or len(r) <= maxlen:
 			c = self.read(1)
 			if not c:
-				raise ValueError('Unterminated string starting at %d' % (start))
-			if c == b'\x00':
+				raise ValueError("Unterminated string starting at %d" % (start))
+			if c == b"\0":
 				break
 			r.append(c)
-		return b''.join(r)
+		return b"".join(r)
 
 	def struct_calcsize(self, fmt):
 		return struct.calcsize(fmt)
@@ -43,7 +43,7 @@ class BinaryReader:
 		fmtlen = struct.calcsize(fmt)
 		data = self.read(fmtlen)
 		if len(data) != fmtlen:
-			raise ValueError('Not enough bytes left in buffer to read struct')
+			raise ValueError("Not enough bytes left in buffer to read struct")
 		return struct.unpack(fmt, data)
 
 	def read_struct_into(self, dest, fmt, endian=None):
@@ -54,7 +54,7 @@ class BinaryReader:
 	def read_type(self, type_fmt, endian=None):
 		r = self.read_struct(type_fmt, endian=endian)
 		if len(r) != 1:
-			raise ValueError('Format %r did not describe a single type' % (type_fmt))
+			raise ValueError("Format %r did not describe a single type" % (type_fmt))
 		return r[0]
 
 
@@ -69,8 +69,8 @@ def load_lib(*names):
 			if libname:
 				return ctypes.CDLL(libname)
 			else:
-				dll_path = os.path.join(os.getcwd(), 'lib%s.dll' % name)
+				dll_path = os.path.join(os.getcwd(), "lib%s.dll" % (name))
 				return ctypes.CDLL(dll_path)
 		except OSError:
 			pass
-	raise LibraryNotFoundException('Could not load the library %r' % (names[0]))
+	raise LibraryNotFoundException("Could not load the library %r" % (names[0]))
