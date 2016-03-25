@@ -23,9 +23,9 @@ setup(
 	author=fsb5.__author__,
 	author_email=fsb5.__email__,
 	description='Library and to extract audio from FSB5 (FMOD Sample Bank) files',
-	download_url='https://github.com/synap5e/python-fsb5/tarball/master',
+	download_url='https://github.com/HearthSim/python-fsb5/tarball/master',
 	license='MIT',
-	url='https://github.com/synap5e/python-fsb5',
+	url='https://github.com/HearthSim/python-fsb5',
 	classifiers=CLASSIFIERS,
 	packages=find_packages(),
 )
