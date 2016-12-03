@@ -10,23 +10,7 @@ from .vorbis_headers import lookup as vorbis_header_lookup
 
 
 vorbis = load_lib('vorbis')
-vorbisenc = load_lib('vorbisenc', 'vorbis')
 ogg = load_lib('ogg')
-
-
-class VorbisEncodeRequest(IntEnum):
-	OV_ECTL_RATEMANAGE2_GET = 0x14
-	OV_ECTL_RATEMANAGE2_SET = 0x15
-	OV_ECTL_LOWPASS_GET     = 0x20
-	OV_ECTL_LOWPASS_SET     = 0x21
-	OV_ECTL_IBLOCK_GET      = 0x30
-	OV_ECTL_IBLOCK_SET      = 0x31
-	OV_ECTL_COUPLING_GET    = 0x40
-	OV_ECTL_COUPLING_SET    = 0x41
-	OV_ECTL_RATEMANAGE_GET  = 0x10
-	OV_ECTL_RATEMANAGE_SET  = 0x11
-	OV_ECTL_RATEMANAGE_AVG  = 0x12
-	OV_ECTL_RATEMANAGE_HARD = 0x13
 
 
 class VorbisInfo(ctypes.Structure):
@@ -212,26 +196,6 @@ vorbis.vorbis_dsp_clear.restype = None
 vorbis.vorbis_commentheader_out.argtypes = [ctypes.POINTER(VorbisComment), ctypes.POINTER(OggPacket)]
 vorbis.vorbis_commentheader_out.errcheck = errcheck
 
-##
-# libvorbisenc functions
-
-vorbisenc.vorbis_encode_setup_vbr.argtypes = [
-	ctypes.POINTER(VorbisInfo),
-	ctypes.c_long,
-	ctypes.c_long,
-	ctypes.c_float
-]
-vorbisenc.vorbis_encode_setup_vbr.errcheck = errcheck
-
-vorbisenc.vorbis_encode_ctl.argtypes = [ctypes.POINTER(VorbisInfo), ctypes.c_int, ctypes.c_void_p]
-vorbisenc.vorbis_encode_ctl.errcheck = errcheck
-
-vorbisenc.vorbis_encode_setup_init.argtypes = [ctypes.POINTER(VorbisInfo)]
-vorbisenc.vorbis_encode_setup_init.errcheck = errcheck
-
-vorbis.vorbis_info_blocksize.argtypes = [ctypes.POINTER(VorbisInfo), ctypes.c_int]
-vorbis.vorbis_info_blocksize.restype = ctypes.c_int
-
 vorbis.vorbis_synthesis_headerin.argtypes = [
 	ctypes.POINTER(VorbisInfo),
 	ctypes.POINTER(VorbisComment),
@@ -295,17 +259,16 @@ def rebuild(sample):
 
 	crc32 = sample.metadata[MetadataChunkType.VORBISDATA].crc32
 	try:
-		quality, channels, rate = vorbis_header_lookup[crc32]
+		setup_packet_buff = vorbis_header_lookup[crc32]
 	except KeyError as e:
 		raise ValueError('Could not find header info for crc32=%d' % crc32) from e
-	blocksize_short, blocksize_long, setup_packet_buff = get_header_info(quality, channels, rate)
 
 	info = VorbisInfo()
 	comment = VorbisComment()
 	state = OggStreamState(1)
 	outbuf = BytesIO()
 
-	id_header      = rebuild_id_header(sample.channels, sample.frequency, blocksize_short, blocksize_long)
+	id_header      = rebuild_id_header(sample.channels, sample.frequency, 0x100, 0x800)
 	comment_header = rebuild_comment_header()
 	setup_header   = rebuild_setup_header(setup_packet_buff)
 
@@ -414,34 +377,3 @@ def rebuild_setup_header(setup_packet_buff):
 	packet.packetno = 2
 
 	return packet
-
-
-def lerp(x, x_0, x_1, y_0, y_1):
-	return y_0 + (y_1 - y_0) * ((x - x_0) / (x_1 - x_0))
-
-
-def get_header_info(quality, channels, rate):
-	vorbis_quality = lerp(quality, 1, 100, -0.1, 1.0)
-
-	info    = VorbisInfo()
-	comment = VorbisComment()
-	state   = VorbisDSPState()
-
-	id_header      = OggPacket()
-	comment_header = OggPacket()
-	setup_header   = OggPacket()
-
-	vorbisenc.vorbis_encode_setup_vbr(info, channels, rate, vorbis_quality)
-	vorbisenc.vorbis_encode_ctl(info, VorbisEncodeRequest.OV_ECTL_COUPLING_SET, ctypes.byref(ctypes.c_int(1)))
-	vorbisenc.vorbis_encode_setup_init(info)
-	vorbis.vorbis_analysis_init(state, info)
-
-	vorbis.vorbis_analysis_headerout(state, comment, id_header, comment_header, setup_header)
-
-	blocksize_short   = vorbis.vorbis_info_blocksize(info, 0)
-	blocksize_long    = vorbis.vorbis_info_blocksize(info, 1)
-	setup_packet_buff = bytes(setup_header.packet[:setup_header.bytes])
-
-	vorbis.vorbis_dsp_clear(state)
-
-	return blocksize_short, blocksize_long, setup_packet_buff
