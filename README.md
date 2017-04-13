@@ -39,6 +39,8 @@ FSB5 does not require samples to store a name. If samples are stored without a n
 
 ## Requirements
 
+python-fsb5 should work with python3 from version 3.2 and up.
+
 `libogg` and `libvorbis` are required to decode ogg samples. For linux simply install from your package manager. For windows either ensure the dlls are installed or download the appropriate release.
 
 If ogg files are not required to be decoded then the libraries are not required.
