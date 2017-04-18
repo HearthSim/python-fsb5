@@ -41,7 +41,7 @@ FSB5 does not require samples to store a name. If samples are stored without a n
 
 python-fsb5 should work with python3 from version 3.2 and up.
 
-`libogg` and `libvorbis` are required to decode ogg samples. For linux simply install from your package manager. For windows either ensure the dlls are installed or download the appropriate release.
+`libogg` and `libvorbis` are required to decode ogg samples. For linux simply install from your package manager. For windows ensure the dlls are avaliable (ie. in System32 or the directory you are running the script from). Known working dlls are avaliable as part of the [release](https://github.com/HearthSim/python-fsb5/releases/tag/b7bf605).
 
 If ogg files are not required to be decoded then the libraries are not required.
 
