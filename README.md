@@ -5,7 +5,7 @@ Python library and tool to extract FSB5 (FMOD Sample Bank) files.
 
 - MPEG
 - Vorbis (OGG)
-- WAVE (PCM8, PCM16, PCM32)
+- WAVE (PCM8, PCM16, PCM32, PCMFLOAT)
 
 Other formats can be identified but will be extracted as `.dat` files and may not play as the headers may be missing.
 
