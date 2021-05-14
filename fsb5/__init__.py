@@ -208,8 +208,8 @@ class FSB5:
 			return sample.data
 		elif self.header.mode == SoundFormat.VORBIS:
 			# import here as vorbis.py requires native libraries
-			from . import vorbis
-			return vorbis.rebuild(sample)
+			from .vorbis import rebuild
+			return rebuild(sample)
 		elif self.header.mode.is_pcm:
 			from .pcm import rebuild
 			if self.header.mode == SoundFormat.PCM8:
