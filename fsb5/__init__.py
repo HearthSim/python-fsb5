@@ -113,11 +113,23 @@ class FSB5:
 	def __init__(self, data):
 		buf = BinaryReader(BytesIO(data), endian="<")
 
-		magic = buf.read(4)
-		if magic != b"FSB5":
-			raise ValueError("Expected magic header 'FSB5' but got %r" % (magic))
+		chunk = 10240000
+		fpos = 0
+		while True:
+				ff = buf.read(chunk)
+				if not ff:
+						break
+				offset = ff.find(b"FSB5")
+				if offset > 0:
+						offset += fpos
+						break
+				fpos += chunk
 
-		buf.seek(0)
+		if offset < 0:
+				buf.seek(0)
+				raise ValueError("Expected magic header 'FSB5' but got %r" % (buf.read(4)))
+
+		buf.seek(offset)
 		self.header = buf.read_struct_into(FSB5Header, "4s I I I I I I 8s 16s 8s")
 		if self.header.version == 0:
 			self.header = self.header._replace(unknown=buf.read_type("I"))
